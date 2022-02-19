@@ -10,13 +10,14 @@ from zipfile import ZipFile
 
 class ProgressBar():
     """Window for the progress bar."""
-    def __init__(self, path, files):
+    def __init__(self, path, files, target_path=''):
         """Initializes the progress bar."""
         self._window = Gtk.Window(default_height=50, default_width=300)
         self._window.connect('destroy', Gtk.main_quit)
 
         self._path = path
         self._files = files
+        self._target_path = target_path
 
         self._progress = Gtk.ProgressBar(show_text=True)
         self._window.add(self._progress)
@@ -41,7 +42,10 @@ class ProgressBar():
             if file_name.endswith('.zip'):
                 GLib.idle_add(self._update_progress, progress)
                 with ZipFile(file_name, 'r') as zip:
-                    zip.extractall()
+                    if not self._target_path:
+                        zip.extractall()
+                    else:
+                        zip.extractall(self._target_path)
 
             time.sleep(0.2)
 
@@ -54,8 +58,34 @@ class ProgressBar():
         self._thread.start()
 
 
+def select_folder():
+    """Dialog box for choosing a directory to extract to."""
+    action = Gtk.FileChooserAction.SELECT_FOLDER
+    window = Gtk.FileChooserDialog(
+            'Select..',
+            None,
+            action,
+            (
+                'Cancel',
+                Gtk.ResponseType.CANCEL,
+                'Ok',
+                Gtk.ResponseType.OK
+            )
+        )
+
+    window.connect('destroy', Gtk.main_quit)
+    response = window.run()
+    directory = ''
+    if not response:
+        directory = response.get_filename()
+    window.destroy()
+
+    return directory
+
+
 class UnzipMenuProvider(GObject.GObject, Caja.MenuProvider):
-    def _extract_here(self, menu, files: 'list[CajaVFSFile]'):
+    """Context menu for commands."""
+    def _extract_here(self, menu, files):
         """Extracts selected files to current location."""
         # Change to correct directory
         path = os.path.dirname(files[0].get_location().get_path())
@@ -64,8 +94,19 @@ class UnzipMenuProvider(GObject.GObject, Caja.MenuProvider):
         progress.start()
         Gtk.main()
 
-    def get_file_items(self, window, files: 'list[CajaVFSFile]'):
+    def _extract_to(self, menu, files):
+        """Extracts selected files to chose location."""
+        directory = select_folder()
+        path = os.path.dirname(files[0].get_location().get_path())
+        os.chdir(path)
+        progress = ProgressBar(path, files, directory)
+        progress.start()
+        Gtk.main()
+
+    def get_file_items(self, window, files):
         """Gets files selected and connects functions."""
+        all_files = files.copy()
+
         # Set up the top menu with a submenu
         top_menu_item = Caja.MenuItem(
                 name='UnzipMenuProvider::Unzip',
@@ -84,7 +125,6 @@ class UnzipMenuProvider(GObject.GObject, Caja.MenuProvider):
                 icon='')
 
         submenu.append_item(extract_here)
-        all_files = files.copy()
         extract_here.connect('activate', self._extract_here, all_files)
 
         extract_to_menu_item = Caja.MenuItem(
@@ -93,5 +133,6 @@ class UnzipMenuProvider(GObject.GObject, Caja.MenuProvider):
                 tip='',
                 icon='')
         submenu.append_item(extract_to_menu_item)
+        extract_to_menu_item.connect('activate', self._extract_to, all_files)
 
         return top_menu_item,
