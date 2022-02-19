@@ -95,21 +95,3 @@ class UnzipMenuProvider(GObject.GObject, Caja.MenuProvider):
         submenu.append_item(extract_to_menu_item)
 
         return top_menu_item,
-
-    def get_background_items(self, window, file):
-        """Gets all the background items."""
-        submenu = Caja.Menu()
-        submenu.append_item(Caja.MenuItem(
-            name='UnzipMenuProvider::Bar2',
-            label='Bar2',
-            tip='',
-            icon=''))
-
-        menuitem = Caja.MenuItem(
-                name='UnzipMenuProvider::Foo2',
-                label='Foo2',
-                tip='',
-                icon='')
-        menuitem.set_submenu(submenu)
-
-        return menuitem,
