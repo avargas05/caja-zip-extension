@@ -61,25 +61,20 @@ class ProgressBar():
 def select_folder():
     """Dialog box for choosing a directory to extract to."""
     action = Gtk.FileChooserAction.SELECT_FOLDER
-    window = Gtk.FileChooserDialog(
+    dialog = Gtk.FileChooserDialog(
             'Select..',
             None,
             action,
-            (
-                'Cancel',
-                Gtk.ResponseType.CANCEL,
-                'Ok',
-                Gtk.ResponseType.OK
-            )
+            ('Cancel', Gtk.ResponseType.CANCEL, 'Ok', Gtk.ResponseType.ACCEPT)
         )
 
-    window.connect('destroy', Gtk.main_quit)
-    response = window.run()
+    dialog.connect('destroy', Gtk.main_quit)
+    response = dialog.run()
     directory = ''
-    if not response:
-        directory = response.get_filename()
-    window.destroy()
+    if response == Gtk.ResponseType.ACCEPT:
+        directory = dialog.get_filename()
 
+    dialog.destroy()
     return directory
 
 
@@ -97,11 +92,12 @@ class UnzipMenuProvider(GObject.GObject, Caja.MenuProvider):
     def _extract_to(self, menu, files):
         """Extracts selected files to chose location."""
         directory = select_folder()
-        path = os.path.dirname(files[0].get_location().get_path())
-        os.chdir(path)
-        progress = ProgressBar(path, files, directory)
-        progress.start()
-        Gtk.main()
+        if directory:
+            path = os.path.dirname(files[0].get_location().get_path())
+            os.chdir(path)
+            progress = ProgressBar(path, files, directory)
+            progress.start()
+            Gtk.main()
 
     def get_file_items(self, window, files):
         """Gets files selected and connects functions."""
