@@ -5,6 +5,7 @@ Right-click context menu extension for extracting and compressing files in Caja 
 ## Dependencies
 - caja
 - python-caja
+- python-gobject
 
 ## Installation
 After cloning copy zip.py to the caja python extension directory
