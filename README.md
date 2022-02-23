@@ -8,7 +8,9 @@ Right-click context menu extension for extracting and compressing files in Caja 
 - python-gobject
 
 ## Installation
-After cloning copy zip.py to the caja python extension directory
+After cloning, file needs to be in caja python directory.
+You can copy or make a symlink.
 ~~~bash
-cp zip.py ~/.local/share/caja-python/extensions/
+ln -s zip.py ~/.local/share/caja-python/extensions/zip.py
 ~~~
+
